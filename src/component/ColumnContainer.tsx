@@ -2,17 +2,27 @@ import {Column, Id} from "../types.ts";
 import TrachIcon from "../icons/TrachIcon.tsx";
 import {useSortable} from "@dnd-kit/sortable";
 import {CSS} from "@dnd-kit/utilities"
- interface IProps {
+import {useState} from "react";
+
+interface IProps {
     column: Column
     deleteColumn: (id: Id) => void
+    updateColumn:(id:Id,title:string)=>void
 }
 
 function ColumnContainer(props: IProps) {
 
-    const {column, deleteColumn} = props
+    const {column, deleteColumn,updateColumn} = props
+    const [editMode, setEditMode] = useState(false)
 
-    const {setNodeRef, attributes, listeners, transform, transition}
-        = useSortable({
+    const {
+        setNodeRef,
+        attributes,
+        listeners,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({
         id: column.id,
         data: {
             type: "Column",
@@ -22,13 +32,30 @@ function ColumnContainer(props: IProps) {
 
     const style = {
         transition,
-        transform:CSS.Transform.toString(transform),
+        transform: CSS.Transform.toString(transform),
+    }
+
+    if (isDragging) {
+        return <div
+            ref={setNodeRef}
+            style={style}
+            className="
+            bg-columnBackgroundColor
+            opacity-40
+            border-2
+            border-rose-400
+            w-[350px]
+            h-[500px]
+            max-h-[500px]
+            rounden-md
+            flex
+            flex-col"></div>
     }
 
     return (
         <div
             ref={setNodeRef}
-            style = {style}
+            style={style}
             className="
             bg-columnBackgroundColor
             w-[350px]
@@ -41,6 +68,9 @@ function ColumnContainer(props: IProps) {
             <div
                 {...attributes}
                 {...listeners}
+                onClick={() => {
+                    setEditMode(true)
+                }}
                 className="
                 bg-mainBackgroundColor
                 text-md
@@ -67,7 +97,19 @@ function ColumnContainer(props: IProps) {
                         rounded-full
                         ">0
                     </div>
-                    {column.title}
+                    {!editMode && column.title}
+                    {editMode && <input className="bg-black focus:border-rose-600 border-rounded outline-none px-2"
+                        value={column.title}
+                        onChange={(e) =>
+                            updateColumn(column.id, e.target.value)}
+                        autoFocus
+                        onBlur={() => {setEditMode(false)
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key !== "Enter") return
+                            setEditMode(false)
+                        }}
+                    />}
                 </div>
                 <button onClick={() => deleteColumn(column.id)} className="
                     stroke-gray-500
