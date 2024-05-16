@@ -1,8 +1,8 @@
 import {Column, Id, Task} from "../types.ts";
 import TrachIcon from "../icons/TrachIcon.tsx";
-import {useSortable} from "@dnd-kit/sortable";
+import {SortableContext, useSortable} from "@dnd-kit/sortable";
 import {CSS} from "@dnd-kit/utilities"
-import {useState} from "react";
+import {useMemo, useState} from "react";
 import PlusIcon from "../icons/PlusIcon.tsx";
 import TaskCard from "./TaskCard.tsx";
 
@@ -12,15 +12,16 @@ interface IProps {
     updateColumn: (id: Id, title: string) => void
     createTask: (columnId: Id) => void
     tasks: Array<Task>
-    deleteTask:(id:Id)=>void
-    updateTask:(id:Id,content:string)=>void
+    deleteTask: (id: Id) => void
+    updateTask: (id: Id, content: string) => void
 }
 
-function ColumnContainer(props: IProps) {
+function ColumnContainer({column, deleteColumn, updateColumn, createTask, tasks, deleteTask, updateTask}: IProps) {
 
-    const {column, deleteColumn, updateColumn, createTask, tasks,deleteTask,updateTask} = props
     const [editMode, setEditMode] = useState(false)
-
+    const tasksId = useMemo(()=>{
+        return tasks.map(task=>task.id)
+    },[tasks])
 
     const {
         setNodeRef,
@@ -106,19 +107,19 @@ function ColumnContainer(props: IProps) {
                     </div>
                     {!editMode && column.title}
                     {editMode &&
-                    <input className="bg-black focus:border-rose-600 border-rounded outline-none px-2"
-                        value={column.title}
-                        onChange={(e) =>
-                            updateColumn(column.id, e.target.value)}
-                        autoFocus
-                        onBlur={() => {
-                            setEditMode(false)
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key !== "Enter") return
-                            setEditMode(false)
-                        }}
-                    />}
+                        <input className="bg-black focus:border-rose-600 border-rounded outline-none px-2"
+                               value={column.title}
+                               onChange={(e) =>
+                                   updateColumn(column.id, e.target.value)}
+                               autoFocus
+                               onBlur={() => {
+                                   setEditMode(false)
+                               }}
+                               onKeyDown={(e) => {
+                                   if (e.key !== "Enter") return
+                                   setEditMode(false)
+                               }}
+                        />}
                 </div>
                 <button onClick={() => deleteColumn(column.id)} className="
                     stroke-gray-500
@@ -130,11 +131,14 @@ function ColumnContainer(props: IProps) {
                 ><TrachIcon/></button>
             </div>
             <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
-                {
-                    tasks.map(task => (
-                        <TaskCard key={task.id} task={task} deleteTask={deleteTask} updateTask={updateTask}></TaskCard>
-                    ))
-                }
+                <SortableContext items={tasksId}>
+                    {
+                        tasks.map(task => (
+                            <TaskCard key={task.id} task={task} deleteTask={deleteTask}
+                                      updateTask={updateTask}></TaskCard>
+                        ))
+                    }
+                </SortableContext>
             </div>
             <button onClick={() => createTask(column.id)}
                     className="flex gap-2
