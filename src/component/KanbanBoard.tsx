@@ -1,10 +1,18 @@
 import PlusIcon from "../icons/PlusIcon.tsx";
-import {useState} from "react";
-import {Column} from "../types.ts";
+import {useMemo, useState} from "react";
+import {Column, Id} from "../types.ts";
 import ColumnContainer from "./ColumnContainer.tsx";
+import {DndContext, DragOverlay, DragStartEvent} from "@dnd-kit/core";
+import {SortableContext} from "@dnd-kit/sortable";
+import {createPortal} from "react-dom";
+
 
 function KanbanBoard() {
     const [colums, setColums] = useState<Array<Column>>([])
+    const columsId = useMemo(() => colums.map((col) => col.id), [colums])
+
+    const [activeColumn, setActiveColumn] = useState<Column | null>(null)
+
 
     function generateId() {
         return Math.floor(Math.random() * 10001);
@@ -20,6 +28,20 @@ function KanbanBoard() {
 
     }
 
+    function deleteColumn(id: Id) {
+        const filteredColumns = colums.filter(col => col.id !== id)
+        setColums(filteredColumns)
+    }
+
+    function onDragStart(e: DragStartEvent) {
+        console.log(e)
+        if (e.active.data.current?.type === "Column") {
+            setActiveColumn(e.active.data.current.column)
+            return
+
+        }
+    }
+
     return (
         <div className="
             m-auto
@@ -31,11 +53,15 @@ function KanbanBoard() {
             overflow-y-hidden
             px-[40px]
         ">
-            <div className="m-auto flex gap-4">
-                <div className="flex gap-4">{colums.map((col) =>
-                    (<ColumnContainer column={col}/>))}
-                </div>
-                <button onClick={createNewColumn} className="
+            <DndContext onDragStart={onDragStart}>
+                <div className="m-auto flex gap-4">
+                    <div className="flex gap-4">
+                        <SortableContext items={columsId}>
+                            {colums.map((col) =>
+                                (<ColumnContainer key={col.id} column={col} deleteColumn={deleteColumn}/>))}
+                        </SortableContext>
+                    </div>
+                    <button onClick={createNewColumn} className="
                     h-[60px]
                     w-[350px]
                     min-w-[350px]
@@ -49,9 +75,17 @@ function KanbanBoard() {
                     flex
                     gap-2
             "><PlusIcon/>Добавить столбец
-                </button>
-            </div>
-
+                    </button>
+                </div>
+                {createPortal(<DragOverlay>
+                    {activeColumn &&
+                     <ColumnContainer
+                         column={activeColumn}
+                         deleteColumn={deleteColumn}/>
+                    }
+                </DragOverlay>,document.body
+                )}
+            </DndContext>
         </div>);
 }
 
