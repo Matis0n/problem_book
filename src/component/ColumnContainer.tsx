@@ -130,7 +130,14 @@ function ColumnContainer({column, deleteColumn, updateColumn, createTask, tasks,
                     py-2"
                 ><TrachIcon/></button>
             </div>
-            <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
+            <div className="
+                    flex
+                    flex-grow
+                    flex-col
+                    gap-4
+                    p-2
+                    overflow-x-hidden
+                    overflow-y-auto">
                 <SortableContext items={tasksId}>
                     {
                         tasks.map(task => (
